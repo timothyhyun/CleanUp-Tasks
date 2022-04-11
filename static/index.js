@@ -8,8 +8,8 @@ var ctx = canvas.getContext("2d");
 // player: 20
 
 var player = {
-    x: canvas.width/2,
-    y: canvas.height/2,
+    x: 10,
+    y: 10,
     x_v: 0,
     y_v:0,
     carry: 0, 
@@ -17,8 +17,8 @@ var player = {
 };
 
 var agent = {
-    x: canvas.width/2,
-    y: canvas.height/2,
+    x: canvas.width - 30,
+    y: 10,
     x_v: 0,
     y_v: 0, 
     width : 20
@@ -51,11 +51,18 @@ var gsinks = {
     width: 50
 };
 
+
+
+
+var colorDict = {"yellow": 1, "blue": 2, "green":3};
+var playerTurn = true;
+
+
 // Initializing Boxes
 var itemCount = 15;
 var items = [];
 for (var c = 0; c < itemCount; c++) {
-    items[c] = {x:0, y:0, status: true, color:"", width: 10};
+    items[c] = {x:0, y:0, status: true, color: "", width: 10};
 }
 var i = 0;
 while (i < 15){
@@ -71,9 +78,12 @@ while (i < 15){
     var valid = true;
     for (var d = 0; d < itemCount; d++){
         var temp = items[d];
-        if (x < temp.x+25 || x+25 > temp.x ) {
+        if (tx < temp.x+25 || tx+25 > temp.x ) {
             valid = false;
         } 
+        if (ty < temp.y+25 || ty+25 > temp.y ) {
+            valid = false;
+        }
     }
     if (valid) {
         i++;
@@ -120,7 +130,7 @@ function drawItems(){
         if (temp.status){
             ctx.beginPath();
             ctx.rect(temp.x, temp.y, temp.width, temp.width);
-            ctx.fillStyle = temp.colorx;
+            ctx.fillStyle = temp.color;
             ctx.fill();
             ctx.closePath();
         }
@@ -246,6 +256,63 @@ function move() {
 
 }
 
+function interactions () {
+    if (key.interact) {
+        // place block on sink
+
+        const maps = [ysinks, bsinks, gsinks];
+        var i = 1;
+        for (const map of maps) {
+            if (map.x - player.x + player.width < 20 && player.y > map.y && player.y + player.width < map.y + map.width && player.carry == i) {
+                player.carry = 0;
+                sendData();
+                playerTurn = false;
+            }
+            if (player.x - map.x < 20 && player.y > map.y && player.y + player.width < map.y + map.width && player.carry == i) {
+                player.carry = 0;
+                sendData();
+                playerTurn = false;
+            }
+            if (player.y - map.y < 20 && player.x > map.x && player.x + player.width < map.x + map.width && player.carry == i) {
+                player.carry = 0;
+                sendData();
+                playerTurn = false;
+            }
+            if (map.y - (player.y + player.width) < 20 && player.x > map.x && player.x + player.width < map.x + map.width && player.carry == i) {
+                player.carry = 0;
+                sendData();
+                playerTurn = false;
+            }
+            i++;
+        }
+
+        // pick up block
+
+        for (const item in items) {
+            if (item.x - player.x + player.width < 20 && player.y < item.y && player.y + player.width > item.y + item.width && player.carry == 0 && item.status) {
+                player.carry = colorDict[item.color];
+                item.status = false;
+            }
+            if (player.x - item.x < 20 && player.y < item.y && player.y + player.width > item.y + item.width && player.carry == 0 && item.status) {
+                player.carry = colorDict[item.color];
+                item.status = false;
+            }
+            if (player.y - item.y < 20 && player.x < item.x && player.x + player.width > item.x + item.width && player.carry == 0 && item.status) {
+                player.carry = colorDict[item.color];
+                item.status = false;
+            }
+            if (item.y - (player.y + player.width) < 20 && player.x < item.x && player.x + player.width > item.x + item.width && player.carry == 0 && item.status) {
+                player.carry = colorDict[item.color];
+                item.status = false;
+            }
+        }
+
+
+
+        
+    }
+}
+
 
 
 
@@ -253,12 +320,58 @@ function draw() {
     drawPlayers();
     drawSinks();
     drawItems();
-    move();
+    if (playerTurn) {
+        move();
+        interactions();
+    }
+}
 
+
+// need: function to continually send data to server
+
+function sendData() {
+    if (playerTurn) {
+        $.getJSON('/recieveLocations',
+            {player: player},
+            function(data) {
+
+        });
+    }
+}
+
+function sendTotal() {
+    $.getJSON('/recieveTurn',
+            {player:player, item: items, agent: agent},
+            function(data) {
+
+        });
+}
+
+// need: function to continually listen for data from server
+
+function receiveData() {
+    if (!playerTurn) {
+        fetch('/sendTurn')
+             .then(function (response) {
+                return response.json();
+            }).then(function (text) {
+                
+
+            });
+    }
 }
 
 
 
+window.onload = function (){
+    var update_loop = setInterval(draw, 10);
+    draw();
+};
+
+window.onload = function (){
+    var update_loop = setInterval(draw, 10);
+    draw();
+};
 
 window.onload = function (){
     var update_loop = setInterval(draw, 10);
