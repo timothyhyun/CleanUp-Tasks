@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect, request, session, jsonify
+from flask import Flask, render_template, url_for, redirect, request, jsonify
 from agent import Agent
 
 import json
@@ -10,27 +10,23 @@ key = "id"
 currentMove = ""
 history = []
 
-
-
-@app.route("/recieveLocations")
-def recieveData():
-    pass
+curAgent = None
 
 
 
-@app.route("/recieveTurn")
-def recieveTurn():
-    pass
+@app.route("/receiveLocations")
+def receiveData():
+    player = request.args.get("player")
+    print("Hi")
+    #curAgent.addLocation(player)
+    return "none"
+    
 
 
 
-
-
-@app.route("/startTurn")
-def startTurn():
-    curState = request.args.get("state")
-    history.append(curState)
-    currentMove = ""
+@app.route("/receiveTurn")
+def receiveTurn():
+    return "none"
 
 
 
@@ -43,7 +39,7 @@ def sendTurn():
 @app.route("/home")
 def home():
     global agent
-    agent = Agent()
+    curAgent = Agent()
     return render_template('index.html') 
 
 
