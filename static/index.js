@@ -11,12 +11,14 @@ var player = {
     x: 10,
     y: 10,
     carry: 0, 
+    close: -1,
     width: 20
 };
 
 var agent = {
     x: canvas.width - 30,
     y: 10,
+    carry: 0,
     width : 20
 };
 
@@ -49,7 +51,7 @@ var gsinks = {
 
 
 
-
+var colorList = ["red", "blue", "green"];
 var colorDict = {"red": 1, "blue": 2, "green":3};
 var playerTurn = true;
 
@@ -97,7 +99,7 @@ function keyDownHandler(e) {
         keys.up = true;
     } else if (e.key == "Down" || e.key == "ArrowDown") {
         keys.down = true;
-    } else if (e.key == "Spacebar" || e.key == ' '){
+    } else if (e.code == "Space" || e.key == " "){
         keys.interact = true;
     }  
 }
@@ -111,7 +113,7 @@ function keyUpHandler(e) {
         keys.up = false;
     } else if (e.key == "Down" || e.key == "ArrowDown") {
         keys.down = false;
-    } else if (e.key == "Spacebar" || e.key == ' '){
+    } else if (e.code == "Space" || e.key == ' '){
         keys.interact = false;
     } 
 }
@@ -159,12 +161,26 @@ function drawPlayers(){
     ctx.fillStyle = "#0B3349";
     ctx.fill();
     ctx.closePath();
+    if (player.carry != 0){
+        ctx.beginPath();
+        ctx.rect(player.x + player.width/2 - 5, player.y + player.width/2 - 5, 10, 10);
+        ctx.fillStyle = colorList[player.carry - 1];
+        ctx.fill();
+        ctx.closePath();
+    }
 
     ctx.beginPath();
     ctx.rect(agent.x, agent.y, agent.width, agent.width);
     ctx.fillStyle = "#871613";
     ctx.fill();
     ctx.closePath();
+    if (agent.carry != 0){
+        ctx.beginPath();
+        ctx.rect(agent.x + agent.width/2 - 5, agent.y + agent.width/2 - 5, 10, 10);
+        ctx.fillStyle = colorList[agent.carry - 1];
+        ctx.fill();
+        ctx.closePath();
+    }
 
 }
 
@@ -173,16 +189,16 @@ function move() {
     var dx = 0;
     var dy = 0;
     if (keys.left) {
-        dx -= 3;
+        dx -= 2;
     }
     if (keys.right) {
-        dx += 3;
+        dx += 2;
     }
     if (keys.up) {
-        dy -= 3;
+        dy -= 2;
     }
     if (keys.down) {
-        dy += 3;
+        dy += 2;
     }
 
     newX = player.x + dx;
@@ -207,14 +223,15 @@ function move() {
         }
         if (!xvalid && !yvalid) {
             validSpot = false;
-        }
-        
+            player.close = i;
+        }   
     }
     
     // test collisions with sinks and agent
     const iterArray = [rsinks, bsinks, gsinks, agent];
 
-    for (const ites of iterArray) {
+    for (var j = 0; j < 4; j++) {
+        var ites = iterArray[j];
         xvalid = true;
         yvalid = true;
         if (newX > ites.x && newX < ites.x + ites.width) {
@@ -231,6 +248,12 @@ function move() {
         }
         if (!xvalid && !yvalid) {
             validSpot = false;
+            if (j != 3){
+                player.close = j + 15;
+            } else {
+                player.close = -1;
+            }
+            
         }
     }
 
@@ -238,74 +261,41 @@ function move() {
 
     if (newX < 0 || newX + player.width > canvas.width || newY < 0 || newY + player.width > canvas.height) {
         validSpot = false;
+        player.close = -1;
     }
 
     if (validSpot) {
         player.x = newX;
         player.y = newY;
+        player.close = -1;
     } 
 
 
 
 }
 
+
+
 function interactions () {
-    if (keys.interact) {
+    if (keys.interact && player.close > -1) {
         // place block on sink
 
-        const maps = [rsinks, bsinks, gsinks];
-        var i = 1;
-        for (const map of maps) {
-            if (map.x - player.x + player.width < 20 && player.y > map.y && player.y + player.width < map.y + map.width && player.carry == i) {
-                player.carry = 0;
-                sendTotal();
-                playerTurn = false;
-            }
-            if (player.x - map.x < 20 && player.y > map.y && player.y + player.width < map.y + map.width && player.carry == i) {
-                player.carry = 0;
-                sendTotal();
-                playerTurn = false;
-            }
-            if (player.y - map.y < 20 && player.x > map.x && player.x + player.width < map.x + map.width && player.carry == i) {
-                player.carry = 0;
-                sendTotal();
-                playerTurn = false;
-            }
-            if (map.y - (player.y + player.width) < 20 && player.x > map.x && player.x + player.width < map.x + map.width && player.carry == i) {
-                player.carry = 0;
-                sendTotal();
-                playerTurn = false;
-            }
-            i++;
-        }
 
-        // pick up block
-        
-        for (const item in items) {
-            if (item.x - player.x + player.width < 20 && player.y < item.y && player.y + player.width > item.y + item.width && player.carry == 0 && item.status) {
-                player.carry = colorDict[item.color];
-                item.status = false;
-            }
-            if (player.x - item.x < 20 && player.y < item.y && player.y + player.width > item.y + item.width && player.carry == 0 && item.status) {
-                player.carry = colorDict[item.color];
-                item.status = false;
-            }
-            if (player.y - item.y < 20 && player.x < item.x && player.x + player.width > item.x + item.width && player.carry == 0 && item.status) {
-                player.carry = colorDict[item.color];
-                item.status = false;
-            }
-            if (item.y - (player.y + player.width) < 20 && player.x < item.x && player.x + player.width > item.x + item.width && player.carry == 0 && item.status) {
-                player.carry = colorDict[item.color];
-                item.status = false;
-            }
-            if (item.status == false){
-                console.log("hi");
+        if (player.close < 15 && player.carry == 0){
+            temp = items[player.close];
+            player.carry = colorDict[temp.color];
+            temp.status = false;
+
+        } else {
+            var index = player.close - 15 + 1;
+            if (player.carry == index){
+                sendTotal();
+                player.carry = 0;
+                playerTurn = false;
             }
         }
-
-
-
         
+
     }
 }
 
@@ -324,21 +314,48 @@ function draw() {
 }
 
 
+
+function executeCommand(command) {
+
+}
+
+
 // need: function to continually send data to server
 
 function sendData() {
     if (playerTurn) {
         $.getJSON('/receiveLocations',
-            {player: player},
+            {x:player.x, y:player.y, carry: player.carry},
             function(data) {
 
         });
     }
 }
 
+
+
+
 function sendTotal() {
+    var JPlayer = JSON.stringify(player);
+    //var JAgent = JSON.parse(agent);
+    //var JItems = JSON.parse(items);
     $.getJSON('/receiveTurn',
-            {player:player, item: items, agent: agent},
+            {px: player.x, py: player.y, pc: player.carry, ax:agent.x, ay: agent.y, ac: agent.carry, 
+                i0x: items[0].x, i0y: items[0].y, i0c: items[0].color, i0s: items[0].status,
+                i1x: items[1].x, i1y: items[1].y, i1c: items[1].color, i1s: items[1].status,
+                i2x: items[2].x, i2y: items[2].y, i2c: items[2].color, i2s: items[2].status,
+                i3x: items[3].x, i3y: items[3].y, i3c: items[3].color, i3s: items[3].status,
+                i4x: items[4].x, i4y: items[4].y, i4c: items[4].color, i4s: items[4].status,
+                i5x: items[5].x, i5y: items[5].y, i5c: items[5].color, i5s: items[5].status,
+                i6x: items[6].x, i6y: items[6].y, i6c: items[6].color, i6s: items[6].status,
+                i7x: items[7].x, i7y: items[7].y, i7c: items[7].color, i7s: items[7].status,
+                i8x: items[8].x, i8y: items[8].y, i8c: items[8].color, i8s: items[8].status,
+                i9x: items[9].x, i9y: items[9].y, i9c: items[9].color, i9s: items[9].status,
+                i10x: items[10].x, i10y: items[10].y, i10c: items[10].color, i10s: items[10].status,
+                i11x: items[11].x, i11y: items[11].y, i11c: items[11].color, i11s: items[11].status,
+                i12x: items[12].x, i12y: items[12].y, i12c: items[12].color, i12s: items[12].status,
+                i13x: items[13].x, i13y: items[13].y, i13c: items[13].color, i13s: items[13].status,
+                i14x: items[14].x, i14y: items[14].y, i14c: items[14].color, i14s: items[14].status},
             function(data) {
 
         });
@@ -352,7 +369,11 @@ function receiveData() {
              .then(function (response) {
                 return response.json();
             }).then(function (text) {
-                
+                commands = text["turn"]
+                for (var c = 0; c < commands.length; c++) {
+                    executeCommand(commands[c]);
+                }
+                playerTurn = true;
 
             });
     }

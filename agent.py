@@ -6,20 +6,20 @@ class Agent:
 
     # Storing history of 
 
-    history = []
+    partnerLocation = []
     currentState = ""
     decision = []
 
     def __init__ (self):
-        self.history = []
+        self.partnerLocation = []
         self.currentState = ""
 
     
-    def addLocation(self, player):
-        pass
+    def addLocation(self, x, y, c):
+        self.partnerLocation.append((x,y,c))
 
 
-    def computeTurn(self ):
+    def computeTurn(self, player, ag, items ):
         pass
 
     def getTurn(self ):

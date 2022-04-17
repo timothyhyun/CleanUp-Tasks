@@ -7,8 +7,8 @@ import json
 app = Flask(__name__)
 app.secret_key = "secret_key"
 key = "id"
-currentMove = ""
-history = []
+
+
 
 curAgent = None
 
@@ -16,29 +16,54 @@ curAgent = None
 
 @app.route("/receiveLocations")
 def receiveData():
-    player = request.args.get("player")
-    print("Hi")
-    #curAgent.addLocation(player)
+    global curAgent
+    playerX= int(request.args.get("x"))
+    playerY = int(request.args.get("y"))
+    playerC = int(request.args.get("carry"))
+    curAgent.addLocation(playerX, playerY, playerC)
     return "none"
     
 
 
-
 @app.route("/receiveTurn")
 def receiveTurn():
+    player = {}
+    player["x"] = int(request.args.get("px"))
+    player["y"] = int(request.args.get("py"))
+    player["carry"] = int(request.args.get("pc"))
+    ag = {}
+    ag["x"] = int(request.args.get("ax"))
+    ag["y"] = int(request.args.get("ay"))
+    ag["carry"] = int(request.args.get("ac"))
+    items = []
+    for i in range(15):
+        temp = {}
+
+        tx = int(request.args.get("i"+str(i)+"x"))
+        temp["x"] = tx
+        ty = int(request.args.get("i"+str(i)+"y"))
+        temp["y"] = ty
+        ts = request.args.get("i"+str(i)+"s")
+        temp["status"] = ts
+        tc = request.args.get("i"+str(i)+"c")
+        temp["color"] = tc
+        items.append(temp)
+
+    curAgent.computeTurn(player, ag, items)
     return "none"
 
 
 
 @app.route("/sendTurn")
 def sendTurn():
-    return jsonify({"turn": currentMove})
+    decision = curAgent.getTurn()
+    return jsonify({"turn": decision})
 
 
 @app.route("/")
 @app.route("/home")
 def home():
-    global agent
+    global curAgent
     curAgent = Agent()
     return render_template('index.html') 
 
