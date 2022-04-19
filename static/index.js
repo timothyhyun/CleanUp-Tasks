@@ -185,6 +185,59 @@ function drawPlayers(){
 }
 
 
+function calculateClose (newX, newY) {
+    for (var i = 0; i < itemCount; i++) {
+        var temp = items[i];
+        xvalid = true;
+        yvalid = true;
+        if (temp.status && newX < temp.x && newX + player.width> temp.x ) {
+            xvalid = false;
+        }
+        if (temp.status && newX < temp.x + temp.width && newX + player.width  > temp.x + temp.width) {
+            xvalid = false;
+        }
+        if (temp.status && newY < temp.y && newY + player.width > temp.y ) {
+            yvalid = false;
+        }
+        if (temp.status && newY <  temp.y + temp.width && newY+player.width > temp.y + temp.width) {
+            yvalid = false;
+        }
+        if (!xvalid && !yvalid) {
+            validSpot = false;
+            return i;
+        }   
+    }
+
+    // test collisions with sinks and agent
+    const iterArray = [rsinks, bsinks, gsinks, agent];
+
+    for (var j = 0; j < 4; j++) {
+        var ites = iterArray[j];
+        xvalid = true;
+        yvalid = true;
+        if (newX >= ites.x && newX < ites.x + ites.width) {
+            xvalid = false;
+        }
+        if (newX + player.width >= ites.x && newX + player.width  < ites.x + ites.width) {
+            xvalid = false;
+        }
+        if (newY >= ites.y && newY < ites.y + ites.width) {
+            yvalid = false;
+        }
+        if (newY+player.width >= ites.y && newY+player.width < ites.y + ites.width) {
+            yvalid = false;
+        }
+        if (!xvalid && !yvalid) {
+                return j + 15;
+        }
+    }
+    return -1;
+}
+
+
+
+
+
 function move() {
     var dx = 0;
     var dy = 0;
@@ -204,61 +257,16 @@ function move() {
     newX = player.x + dx;
     newY = player.y + dy;
     var validSpot = true;
-    // test collisions with items
-    for (var i = 0; i < itemCount; i++) {
-        var temp = items[i];
-        xvalid = true;
-        yvalid = true;
-        if (temp.status && newX < temp.x && newX + player.width> temp.x ) {
-            xvalid = false;
-        }
-        if (temp.status && newX < temp.x + temp.width && newX + player.width  > temp.x + temp.width) {
-            xvalid = false;
-        }
-        if (temp.status && newY < temp.y && newY + player.width > temp.y ) {
-            yvalid = false;
-        }
-        if (temp.status && newY <  temp.y + temp.width && newY+player.width > temp.y + temp.width) {
-            yvalid = false;
-        }
-        if (!xvalid && !yvalid) {
-            validSpot = false;
-            player.close = i;
-        }   
-    }
-    
-    // test collisions with sinks and agent
-    const iterArray = [rsinks, bsinks, gsinks, agent];
 
-    for (var j = 0; j < 4; j++) {
-        var ites = iterArray[j];
-        xvalid = true;
-        yvalid = true;
-        if (newX > ites.x && newX < ites.x + ites.width) {
-            xvalid = false;
-        }
-        if (newX + player.width > ites.x && newX + player.width  < ites.x + ites.width) {
-            xvalid = false;
-        }
-        if (newY > ites.y && newY < ites.y + ites.width) {
-            yvalid = false;
-        }
-        if (newY+player.width > ites.y && newY+player.width < ites.y + ites.width) {
-            yvalid = false;
-        }
-        if (!xvalid && !yvalid) {
-            validSpot = false;
-            if (j != 3){
-                player.close = j + 15;
-            } else {
-                player.close = -1;
-            }
-            
-        }
-    }
-
+    // collisions with items, sinks and agent
+    var close = calculateClose(newX, newY);
+    if (close != -1){
+        validSpot = false;
+    } 
+    if (close != 18) {
+        player.close = close;
+    } 
     // collision with boundaries
-
     if (newX < 0 || newX + player.width > canvas.width || newY < 0 || newY + player.width > canvas.height) {
         validSpot = false;
         player.close = -1;
@@ -269,8 +277,6 @@ function move() {
         player.y = newY;
         player.close = -1;
     } 
-
-
 
 }
 
@@ -299,8 +305,18 @@ function interactions () {
     }
 }
 
+function sleep(milliseconds) {
+    const date = Date.now();
+    let currentDate = null;
+    do {
+      currentDate = Date.now();
+    } while (currentDate - date < milliseconds);
+}
 
 
+var command = -1;
+var innerCommand = 0;
+var commands = [];
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -310,13 +326,57 @@ function draw() {
     if (playerTurn) {
         move();
         interactions();
+        command = -1;
+    }  else {
+        executeCommand();
     }
 }
 
 
 
-function executeCommand(command) {
 
+function executeAction(action) {
+    if (action == "L") {
+        agent.x -= 2;
+    } else if (action == "R") {
+        agent.x += 2;
+    } else if (action == "U") {
+        agent.y -= 2;
+    } else if (action == "D") {
+        agent.y += 2;
+    } else if (action == "I") {
+        i = calculateClose(agent);
+        if (i != -1 && i != 18 && i < 15) {
+            item = items[i];
+            player.carry = colorDict[item.color];
+            item.status = false;
+        } else if (i != -1 && i != 18) {
+            var index = i - 15 + 1;
+            if (agent.carry == index){
+                sendTotal();
+                agent.carry = 0;
+            }
+
+        }
+    }
+}
+
+function executeCommand() {
+    if (command == commands.length || command == -1){
+        playerTurn = true;
+        command = -1;
+        return
+    }
+    var current = commands[commands];
+    var size = current[1];
+    var action = current[0];
+    if (innerCommand == size) {
+        innerCommand = 0;
+        command++;
+    } else {
+        executeAction(action)
+        innerCommand++;
+    }   
 }
 
 
@@ -335,10 +395,7 @@ function sendData() {
 
 
 
-function sendTotal() {
-    var JPlayer = JSON.stringify(player);
-    //var JAgent = JSON.parse(agent);
-    //var JItems = JSON.parse(items);
+function sendTotal() { 
     $.getJSON('/receiveTurn',
             {px: player.x, py: player.y, pc: player.carry, ax:agent.x, ay: agent.y, ac: agent.carry, 
                 i0x: items[0].x, i0y: items[0].y, i0c: items[0].color, i0s: items[0].status,
@@ -363,18 +420,18 @@ function sendTotal() {
 
 // need: function to continually listen for data from server
 
+
+
+
 function receiveData() {
-    if (!playerTurn) {
+    if (!playerTurn && command == -1) {
         fetch('/sendTurn')
              .then(function (response) {
                 return response.json();
             }).then(function (text) {
                 commands = text["turn"]
-                for (var c = 0; c < commands.length; c++) {
-                    executeCommand(commands[c]);
-                }
-                playerTurn = true;
-
+                command = 0;
+                
             });
     }
 }
@@ -389,6 +446,9 @@ $(document).ready(function() {
 });
 
 $(document).ready(function() {
-    setInterval(receiveData, 500);
+    setInterval(receiveData, 10);
 });
+
+
+
 
