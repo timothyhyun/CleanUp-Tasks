@@ -35,6 +35,17 @@ def receiveTurn():
     ag["x"] = int(request.args.get("ax"))
     ag["y"] = int(request.args.get("ay"))
     ag["carry"] = int(request.args.get("ac"))
+    rsink = {}
+    rsink["x"] = int(request.args.get("rsx"))
+    rsink["y"] = int(request.args.get("rsy"))
+    bsink = {}
+    bsink["x"] = int(request.args.get("bsx"))
+    bsink["y"] = int(request.args.get("bsy"))
+    gsink = {}
+    gsink["x"] = int(request.args.get("gsx"))
+    gsink["y"] = int(request.args.get("gsy"))
+
+
     items = []
     for i in range(15):
         temp = {}
@@ -49,7 +60,7 @@ def receiveTurn():
         temp["color"] = tc
         items.append(temp)
 
-    curAgent.computeTurn(player, ag, items)
+    curAgent.computeTurn(player, ag, items, rsink, bsink, gsink)
     return "none"
 
 

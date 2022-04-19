@@ -328,6 +328,9 @@ function draw() {
         interactions();
         command = -1;
     }  else {
+        if (commands.length == 0){
+            receiveData();
+        }
         executeCommand();
     }
 }
@@ -344,16 +347,16 @@ function executeAction(action) {
         agent.y -= 2;
     } else if (action == "D") {
         agent.y += 2;
-    } else if (action == "I") {
-        i = calculateClose(agent);
+    } else if (action[0] == "I") {
+        i = action[1]
+        console.log(i)
         if (i != -1 && i != 18 && i < 15) {
             item = items[i];
-            player.carry = colorDict[item.color];
+            agent.carry = colorDict[item.color];
             item.status = false;
         } else if (i != -1 && i != 18) {
             var index = i - 15 + 1;
             if (agent.carry == index){
-                sendTotal();
                 agent.carry = 0;
             }
 
@@ -362,21 +365,27 @@ function executeAction(action) {
 }
 
 function executeCommand() {
-    if (command == commands.length || command == -1){
-        playerTurn = true;
-        command = -1;
-        return
+    if (commands == [] || commands.length == 0){
+        return;
     }
-    var current = commands[commands];
-    var size = current[1];
-    var action = current[0];
-    if (innerCommand == size) {
-        innerCommand = 0;
-        command++;
+    if (command == commands.length){
+        playerTurn = true;
+        commands = []
+        command = -1;
+        return;
     } else {
-        executeAction(action)
-        innerCommand++;
-    }   
+        var current = commands[command];
+        var size = current[1];
+        var action = current[0];
+        if (innerCommand == size) {
+            innerCommand = 0;
+            command++;
+        } else {
+            executeAction(action)
+            innerCommand++;
+        }   
+    }
+    
 }
 
 
@@ -398,6 +407,7 @@ function sendData() {
 function sendTotal() { 
     $.getJSON('/receiveTurn',
             {px: player.x, py: player.y, pc: player.carry, ax:agent.x, ay: agent.y, ac: agent.carry, 
+                rsx:rsinks.x, rsy:rsinks.y, bsx: bsinks.x, bxy: bsinks.y, gsx: gsinks.x, gsy: gsinks.y,
                 i0x: items[0].x, i0y: items[0].y, i0c: items[0].color, i0s: items[0].status,
                 i1x: items[1].x, i1y: items[1].y, i1c: items[1].color, i1s: items[1].status,
                 i2x: items[2].x, i2y: items[2].y, i2c: items[2].color, i2s: items[2].status,
@@ -420,13 +430,10 @@ function sendTotal() {
 
 // need: function to continually listen for data from server
 
-
-
-
 function receiveData() {
     if (!playerTurn && command == -1) {
         fetch('/sendTurn')
-             .then(function (response) {
+            .then(function (response) {
                 return response.json();
             }).then(function (text) {
                 commands = text["turn"]
@@ -437,17 +444,24 @@ function receiveData() {
 }
 
 $(document).ready(function() {
-    setInterval(draw, 10);
+    setTimeout(function tick() {
+        draw();
+        timerId = setTimeout(tick, 10); 
+      }, 10);
 });
 
 
 $(document).ready(function() {
     setInterval(sendData, 100);
 });
-
+/*
 $(document).ready(function() {
-    setInterval(receiveData, 10);
+    setTimeout(function tick() {
+        receiveData();
+        timerId = setTimeout(tick, 10); 
+      }, 10);
 });
+*/
 
 
 
