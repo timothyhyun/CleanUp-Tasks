@@ -64,8 +64,8 @@ for (var c = 0; c < itemCount; c++) {
 }
 var i = 0;
 while (i < 15){
-    var tx = Math.floor(Math.random() * 300) + canvas.width/2 - 150 ;
-    var ty = Math.floor(Math.random() * 300) + canvas.height/2 - 150 ;
+    var tx = Math.round((Math.floor(Math.random() * 400) + canvas.width/2 - 200)/10)*10 ;
+    var ty = Math.round((Math.floor(Math.random() * 300) + canvas.height/2 - 150) / 10) * 10 ;
     if (i%3 == 0){
         var colorx = "blue";
     } else if (i%3 == 1){
