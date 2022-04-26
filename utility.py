@@ -95,5 +95,4 @@ def astar(maze, start, end):
 
             # Add the child to the open list
             heapq.heappush(open_list, child)
-
     return None

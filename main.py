@@ -24,9 +24,11 @@ def receiveData():
     return "none"
     
 
+decision = []
 
 @app.route("/receiveTurn")
 def receiveTurn():
+    global decision
     player = {}
     player["x"] = int(request.args.get("px"))
     player["y"] = int(request.args.get("py"))
@@ -55,19 +57,23 @@ def receiveTurn():
         ty = int(request.args.get("i"+str(i)+"y"))
         temp["y"] = ty
         ts = request.args.get("i"+str(i)+"s")
-        temp["status"] = ts
+        if (ts == "true"):
+            temp["status"] = True
+        else:
+            temp["status"] = False 
         tc = request.args.get("i"+str(i)+"c")
         temp["color"] = tc
         items.append(temp)
 
     curAgent.computeTurn(player, ag, items, rsink, bsink, gsink)
+    decision = curAgent.getTurn()
+
     return "none"
 
 
 
 @app.route("/sendTurn")
 def sendTurn():
-    decision = curAgent.getTurn()
     return jsonify({"turn": decision})
 
 

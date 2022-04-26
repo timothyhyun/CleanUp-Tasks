@@ -20,7 +20,7 @@ class Agent:
 
         for i in range(5):
             for j in range(5):
-                maze[y/10+i][x/10+j] = 1
+                maze[y//10+i][x//10+j] = 1
         return maze
 
 
@@ -48,6 +48,8 @@ class Agent:
                     self.decision[-1][1] +=5
                 else :
                     self.decision.append(["R", 5])
+            currentx = x
+            currenty = y
 
 
 
@@ -57,17 +59,22 @@ class Agent:
 
         # create maze for A* algorithm  (1000x600)
         # each turn in the algorithm will be the width of the block or 10px (100x60)
-        inner = [0] * 100
-        maze = inner * 60
-        
+        maze = [[0 for i in range(100)] for j in range(60)]
+
         # fill up maze with player, sinks and items, 
-        maze[player["y"]/10][player["x"]/10] = 1
-        maze[player["y"]/10 + 1][player["x"]/10] = 1
-        maze[player["y"]/10][player["x"]/10 + 1] = 1
-        maze[player["y"]/10+1][player["x"]/10+1] = 1 
-        for item in items:
-            maze[item["y"]/10][item["x"]/10] = 1
+        maze[player["y"]//10][player["x"]//10] = 1
+        maze[player["y"]//10 + 1][player["x"]//10] = 1
+        maze[player["y"]//10][player["x"]//10 + 1] = 1
+        maze[player["y"]//10+1][player["x"]//10+1] = 1 
         
+
+    
+        for item in items:
+            if item["status"]:
+                maze[item["y"]//10][item["x"]//10] = 1
+        
+        
+
         maze = self.computeSink(rsink["x"], rsink["y"], maze)
         maze = self.computeSink(bsink["x"], bsink["y"], maze)
         maze = self.computeSink(gsink["x"], gsink["y"], maze)
@@ -85,15 +92,17 @@ class Agent:
             itemX = item["x"] + 5
             itemY = item["y"] + 5
             dist = abs(agentX - itemX) + abs(agentY - itemY)
-            if dist < min:
+            if dist < min and item["status"] == True:
                 pick = item
                 min = dist
                 loc = i
                 dx = itemX - agentX
                 dy = itemY - agentY
     
-        start = (ag["y"]/10, ag["x"]/10)
-        end = (pick["y"]/10-1, pick["x"]/10)
+        start = (ag["y"]//10, ag["x"]//10)
+        end = (pick["y"]//10-1, pick["x"]//10)
+    
+
         path = utility.astar(maze, start, end)
 
 
@@ -120,23 +129,23 @@ class Agent:
 
         # go to corresponding sink
         color = pick["color"]    
-        playerMaze = (player["y"]/10,player["x"]/10)
         if (color == "red"):
-            end = (rsink["y"]/10 + 5, rsink["x"]/10 + 1)
-            if end == playerMaze:
-                end = (rsink["y"]/10 + 5, rsink["x"]/10 + 3)
+            send = (rsink["y"]//10 + 5, rsink["x"]//10 + 1)
+            if maze[rsink["y"]//10 + 5][rsink["x"]//10 + 1] == 1 :
+                send = (rsink["y"]//10 + 5, rsink["x"]//10 + 5)
         elif (color == "green"):
-            end = (gsink["y"]/10 + 5, gsink["x"]/10 + 1)
-            if end == playerMaze:
-                end = (rsink["y"]/10 + 5, rsink["x"]/10 + 3)
+            send = (gsink["y"]//10 + 5, gsink["x"]//10 + 1)
+            if maze[gsink["y"]//10 + 5][gsink["x"]//10 + 1] == 1 :
+                send = (gsink["y"]//10 + 5, gsink["x"]//10 + 3)
         elif (color == "blue"):
-            end = (bsink["y"]/10 + 5, bsink["x"]/10 + 1)
-            if end == playerMaze:
-                end = (rsink["y"]/10 + 5, rsink["x"]/10 + 3)
+            send = (bsink["y"]//10 + 5, bsink["x"]//10 + 1)
+            if maze[bsink["y"]//10 + 5][bsink["x"]//10 + 1] == 1 :
+                send = (bsink["y"]//10 + 5, bsink["x"]//10 + 3)
 
 
-        path = utility.astar(maze, start, end)
+        path = utility.astar(maze, end, send)
         self.addMoves(path)
+        self.decision.append(["P", 1])
 
 
     def getTurn(self ):

@@ -56,6 +56,9 @@ var colorDict = {"red": 1, "blue": 2, "green":3};
 var playerTurn = true;
 
 
+var startTime; 
+
+
 // Initializing Boxes
 var itemCount = 15;
 var items = [];
@@ -314,24 +317,36 @@ function sleep(milliseconds) {
 }
 
 
+
+function updateTime(){
+    current = Date.now();
+    document.getElementById("timer").innerHTML = (current - startTime)/1000
+}
+
+
+
 var command = -1;
 var innerCommand = 0;
 var commands = [];
-
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawPlayers();
     drawSinks();
     drawItems();
+    updateTime();
     if (playerTurn) {
         move();
         interactions();
         command = -1;
     }  else {
+        
         if (commands.length == 0){
             receiveData();
+        } else {
+            console.log(commands)
+            executeCommand();
         }
-        executeCommand();
+       
     }
 }
 
@@ -348,19 +363,14 @@ function executeAction(action) {
     } else if (action == "D") {
         agent.y += 2;
     } else if (action[0] == "I") {
-        i = action[1]
-        console.log(i)
+        i = action.slice(-1)
         if (i != -1 && i != 18 && i < 15) {
             item = items[i];
             agent.carry = colorDict[item.color];
             item.status = false;
-        } else if (i != -1 && i != 18) {
-            var index = i - 15 + 1;
-            if (agent.carry == index){
-                agent.carry = 0;
-            }
-
-        }
+        } 
+    } else if (action[0] == "P") {
+        agent.carry = 0
     }
 }
 
@@ -371,6 +381,7 @@ function executeCommand() {
     if (command == commands.length){
         playerTurn = true;
         commands = []
+        innerCommand = 0
         command = -1;
         return;
     } else {
@@ -407,7 +418,7 @@ function sendData() {
 function sendTotal() { 
     $.getJSON('/receiveTurn',
             {px: player.x, py: player.y, pc: player.carry, ax:agent.x, ay: agent.y, ac: agent.carry, 
-                rsx:rsinks.x, rsy:rsinks.y, bsx: bsinks.x, bxy: bsinks.y, gsx: gsinks.x, gsy: gsinks.y,
+                rsx:rsinks.x, rsy:rsinks.y, bsx: bsinks.x, bsy: bsinks.y, gsx: gsinks.x, gsy: gsinks.y,
                 i0x: items[0].x, i0y: items[0].y, i0c: items[0].color, i0s: items[0].status,
                 i1x: items[1].x, i1y: items[1].y, i1c: items[1].color, i1s: items[1].status,
                 i2x: items[2].x, i2y: items[2].y, i2c: items[2].color, i2s: items[2].status,
@@ -436,8 +447,13 @@ function receiveData() {
             .then(function (response) {
                 return response.json();
             }).then(function (text) {
+                console.log("Recieving")
                 commands = text["turn"]
                 command = 0;
+                if (commands == [] || commands.length == 0) {
+                    command = -1
+                    console.log("Retrying")
+                }
                 
             });
     }
@@ -452,6 +468,8 @@ $(document).ready(function() {
 
 
 $(document).ready(function() {
+ 
+    startTime = Date.now();
     setInterval(sendData, 100);
 });
 /*
