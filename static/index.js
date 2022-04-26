@@ -325,6 +325,19 @@ function updateTime(){
 
 
 
+function endCondition(){
+    for (var c = 0; c < itemCount; c++){
+        temp = items[c];
+        if (temp.status){
+            return false
+        }
+    }
+    document.getElementById("timer").innerHTML = "Game Over!"
+    return true
+}
+
+
+
 var command = -1;
 var innerCommand = 0;
 var commands = [];
@@ -333,7 +346,11 @@ function draw() {
     drawPlayers();
     drawSinks();
     drawItems();
+    if (endCondition()){
+        return
+    }
     updateTime();
+
     if (playerTurn) {
         move();
         interactions();
@@ -472,6 +489,8 @@ $(document).ready(function() {
     startTime = Date.now();
     setInterval(sendData, 100);
 });
+
+
 /*
 $(document).ready(function() {
     setTimeout(function tick() {
