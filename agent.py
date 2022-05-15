@@ -100,7 +100,7 @@ class Agent:
                 dy = itemY - agentY
     
         start = (ag["y"]//10, ag["x"]//10)
-        end = (pick["y"]//10-1, pick["x"]//10)
+        end = (pick["y"]//10, pick["x"]//10)
     
 
         path = utility.astar(maze, start, end)
@@ -131,7 +131,7 @@ class Agent:
         color = pick["color"]    
         if (color == "red"):
             send = (rsink["y"]//10 + 5, rsink["x"]//10 + 1)
-            if maze[rsink["y"]//10 + 5][rsink["x"]//10 + 1] == 1 :
+            if maze[rsink["y"]//10 + 5][rsink["x"]//10 + 1] == 1:
                 send = (rsink["y"]//10 + 5, rsink["x"]//10 + 5)
         elif (color == "green"):
             send = (gsink["y"]//10 + 5, gsink["x"]//10 + 1)

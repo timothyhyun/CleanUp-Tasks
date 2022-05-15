@@ -1,5 +1,8 @@
+from asyncio import FastChildWatcher
+from matplotlib.pyplot import close
 from node import Node
 import heapq
+import time
 def return_path(current_node):
         path = []
         current = current_node
@@ -25,40 +28,41 @@ def astar(maze, start, end):
     end_node.g = end_node.h = end_node.f = 0
 
     # Initialize both open and closed list
-    open_list = []
-    closed_list = []
-
-    # Heapify the open_list and Add the start node
-    heapq.heapify(open_list) 
-    heapq.heappush(open_list, start_node)
-
-    # Adding a stop condition
-    outer_iterations = 0
-    max_iterations = (len(maze[0]) * len(maze) // 2)
+    closed_list = [start_node]
+    current_node = start_node
 
     # what squares do we search
-    adjacent_squares = ((0, -1), (0, 1), (-1, 0), (1, 0),)
+    adjacent_squares = ((0, -1), (0, 1), (-1, 0), (1, 0))
 
+
+    notFinished = True
+    visited = {}
+    deadends = {}
     # Loop until you find the end
-    while len(open_list) > 0:
-        outer_iterations += 1
-
-        if outer_iterations > max_iterations:
-        # if we hit this point return the path such as it is
-        # it will not contain the destination
-            return return_path(current_node)       
-        
-        # Get the current node
-        current_node = heapq.heappop(open_list)
-        closed_list.append(current_node)
-
-        # Found the goal
-        if current_node == end_node:
+    count = 0
+    while notFinished:
+        count += 1
+        if count > 500:
             return return_path(current_node)
+        
+        if closed_list == []:
+            break
 
         # Generate children
         children = []
-        
+
+        if current_node.position in visited:
+            temp = current_node.parent
+            while temp.position != current_node.position:
+                deadends.add(temp.position)
+                temp = temp.parent
+        else:
+            visited.add(current_node.position)
+
+        if current_node.position == end_node.position:
+                return return_path(current_node)
+
+    
         for new_position in adjacent_squares: # Adjacent squares
 
             # Get node position
@@ -67,32 +71,42 @@ def astar(maze, start, end):
             # Make sure within range
             if node_position[0] > (len(maze) - 1) or node_position[0] < 0 or node_position[1] > (len(maze[len(maze)-1]) -1) or node_position[1] < 0:
                 continue
-
-            # Make sure walkable terrain
-            if maze[node_position[0]][node_position[1]] != 0:
+            
+            if node_position in deadends:
                 continue
-
+            
+            if maze[node_position[0]][node_position[1]] != 0 and node_position != end_node.position:
+                continue
+            
+            if maze[node_position[0]][node_position[1]+1] != 0 and (node_position[0], node_position[1]+1) != end_node.position:
+                continue
+                
+            if maze[node_position[0]+1][node_position[1]] != 0 and (node_position[0]+1, node_position[1]) != end_node.position:
+                continue
+                
+            if maze[node_position[0]+1][node_position[1]+1] != 0 and (node_position[0]+1, node_position[1]+1) != end_node.position:
+                continue
+                
             # Create new node
             new_node = Node(current_node, node_position)
 
             # Append
             children.append(new_node)
+        
+        if children == []:
+            current_node = closed_list.pop()
+            deadends.add(current_node.position)
+            continue
 
         # Loop through children
+        curMin = children[0]
         for child in children:
-            # Child is on the closed list
-            if len([closed_child for closed_child in closed_list if closed_child == child]) > 0:
-                continue
-
             # Create the f, g, and h values
-            child.g = current_node.g + 1
-            child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
-            child.f = child.g + child.h
+            child.f = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
+            if child < curMin:
+                curMin = child
 
-            # Child is already in the open list
-            if len([open_node for open_node in open_list if child.position == open_node.position and child.g > open_node.g]) > 0:
-                continue
+        current_node = curMin
+        closed_list.append(current_node)
 
-            # Add the child to the open list
-            heapq.heappush(open_list, child)
     return None

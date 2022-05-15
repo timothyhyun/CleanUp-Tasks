@@ -1,15 +1,12 @@
-from flask import Flask, render_template, url_for, redirect, request, jsonify
+from flask import Flask, render_template, url_for, redirect, request, jsonify, session
 from agent import Agent
-
 import json
 
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
 key = "id"
-
-
-
+id = 0
 curAgent = None
 
 
@@ -80,6 +77,10 @@ def sendTurn():
 @app.route("/")
 @app.route("/home")
 def home():
+    if key not in session:
+        global id
+        session[key] = id
+        id += 1
     global curAgent
     curAgent = Agent()
     return render_template('index.html') 

@@ -54,6 +54,7 @@ var gsinks = {
 var colorList = ["red", "blue", "green"];
 var colorDict = {"red": 1, "blue": 2, "green":3};
 var playerTurn = true;
+var hasRun = false;
 
 
 var startTime; 
@@ -320,7 +321,9 @@ function sleep(milliseconds) {
 
 function updateTime(){
     current = Date.now();
-    document.getElementById("timer").innerHTML = (current - startTime)/1000
+    minutes = Math.round((current-startTime) / 60000)
+    seconds = Math.round((current-startTime) / 1000)%60
+    document.getElementById("timer").innerHTML = "Minutes: " + minutes + " Seconds: " + seconds
 }
 
 
@@ -332,6 +335,10 @@ function endCondition(){
             return false
         }
     }
+    if (player.carry != 0 && agent.carry != 0){
+        return false;
+    }
+
     document.getElementById("timer").innerHTML = "Game Over!"
     return true
 }
@@ -341,6 +348,8 @@ function endCondition(){
 var command = -1;
 var innerCommand = 0;
 var commands = [];
+
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawPlayers();
@@ -354,10 +363,13 @@ function draw() {
     if (playerTurn) {
         move();
         interactions();
+        innerCommand = 0;
+        commands = [];
         command = -1;
+        hasRun = false
     }  else {
         
-        if (commands.length == 0){
+        if (commands.length == 0 && hasRun == false){
             receiveData();
         } else {
             console.log(commands)
@@ -380,7 +392,7 @@ function executeAction(action) {
     } else if (action == "D") {
         agent.y += 2;
     } else if (action[0] == "I") {
-        i = action.slice(-1)
+        i = action.slice(1)
         if (i != -1 && i != 18 && i < 15) {
             item = items[i];
             agent.carry = colorDict[item.color];
@@ -392,6 +404,7 @@ function executeAction(action) {
 }
 
 function executeCommand() {
+
     if (commands == [] || commands.length == 0){
         return;
     }
@@ -460,6 +473,7 @@ function sendTotal() {
 
 function receiveData() {
     if (!playerTurn && command == -1) {
+        hasRun = true
         fetch('/sendTurn')
             .then(function (response) {
                 return response.json();
