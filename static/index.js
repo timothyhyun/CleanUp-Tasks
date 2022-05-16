@@ -335,7 +335,7 @@ function endCondition(){
             return false
         }
     }
-    if (player.carry != 0 && agent.carry != 0){
+    if (player.carry != 0 || agent.carry != 0){
         return false;
     }
 
@@ -433,13 +433,28 @@ function executeCommand() {
 // need: function to continually send data to server
 
 function sendData() {
-    if (playerTurn) {
-        $.getJSON('/receiveLocations',
-            {x:player.x, y:player.y, carry: player.carry},
-            function(data) {
+    $.getJSON('/updateServer',
+        {time: current-startTime, px: player.x, py: player.y, pc: player.carry, ax:agent.x, ay: agent.y, ac: agent.carry, 
+            rsx:rsinks.x, rsy:rsinks.y, bsx: bsinks.x, bsy: bsinks.y, gsx: gsinks.x, gsy: gsinks.y,
+            i0x: items[0].x, i0y: items[0].y, i0c: items[0].color, i0s: items[0].status,
+            i1x: items[1].x, i1y: items[1].y, i1c: items[1].color, i1s: items[1].status,
+            i2x: items[2].x, i2y: items[2].y, i2c: items[2].color, i2s: items[2].status,
+            i3x: items[3].x, i3y: items[3].y, i3c: items[3].color, i3s: items[3].status,
+            i4x: items[4].x, i4y: items[4].y, i4c: items[4].color, i4s: items[4].status,
+            i5x: items[5].x, i5y: items[5].y, i5c: items[5].color, i5s: items[5].status,
+            i6x: items[6].x, i6y: items[6].y, i6c: items[6].color, i6s: items[6].status,
+            i7x: items[7].x, i7y: items[7].y, i7c: items[7].color, i7s: items[7].status,
+            i8x: items[8].x, i8y: items[8].y, i8c: items[8].color, i8s: items[8].status,
+            i9x: items[9].x, i9y: items[9].y, i9c: items[9].color, i9s: items[9].status,
+            i10x: items[10].x, i10y: items[10].y, i10c: items[10].color, i10s: items[10].status,
+            i11x: items[11].x, i11y: items[11].y, i11c: items[11].color, i11s: items[11].status,
+            i12x: items[12].x, i12y: items[12].y, i12c: items[12].color, i12s: items[12].status,
+            i13x: items[13].x, i13y: items[13].y, i13c: items[13].color, i13s: items[13].status,
+            i14x: items[14].x, i14y: items[14].y, i14c: items[14].color, i14s: items[14].status},
+        function(data) {
 
-        });
-    }
+    });
+    
 }
 
 
@@ -501,7 +516,7 @@ $(document).ready(function() {
 $(document).ready(function() {
  
     startTime = Date.now();
-    setInterval(sendData, 100);
+    setInterval(sendData, 250);
 });
 
 

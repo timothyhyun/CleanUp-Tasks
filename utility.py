@@ -56,6 +56,7 @@ def astar(maze, start, end):
             while temp.position != current_node.position:
                 deadends.add(temp.position)
                 temp = temp.parent
+            current_node.parent = temp.parent
         else:
             visited.add(current_node.position)
 
@@ -72,6 +73,7 @@ def astar(maze, start, end):
             if node_position[0] > (len(maze) - 1) or node_position[0] < 0 or node_position[1] > (len(maze[len(maze)-1]) -1) or node_position[1] < 0:
                 continue
             
+            # Make sure the agent does not go over an object
             if node_position in deadends:
                 continue
             
@@ -93,6 +95,7 @@ def astar(maze, start, end):
             # Append
             children.append(new_node)
         
+        # If no possible paths, backtrack
         if children == []:
             current_node = closed_list.pop()
             deadends.add(current_node.position)
@@ -101,7 +104,7 @@ def astar(maze, start, end):
         # Loop through children
         curMin = children[0]
         for child in children:
-            # Create the f, g, and h values
+            # Create the f value
             child.f = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
             if child < curMin:
                 curMin = child
