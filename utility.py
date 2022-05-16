@@ -36,8 +36,10 @@ def astar(maze, start, end):
 
 
     notFinished = True
-    visited = {}
-    deadends = {}
+    # Visited and Deadends Set
+    visited = set([])
+    deadends = set([])
+    
     # Loop until you find the end
     count = 0
     while notFinished:
@@ -51,15 +53,17 @@ def astar(maze, start, end):
         # Generate children
         children = []
 
+        # If we revisit, add nodes to the deadend set
         if current_node.position in visited:
             temp = current_node.parent
             while temp.position != current_node.position:
                 deadends.add(temp.position)
+                # remove backtracking from path
                 temp = temp.parent
             current_node.parent = temp.parent
         else:
             visited.add(current_node.position)
-
+        # end turn if reach destination
         if current_node.position == end_node.position:
                 return return_path(current_node)
 
@@ -108,7 +112,7 @@ def astar(maze, start, end):
             child.f = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
             if child < curMin:
                 curMin = child
-
+        # choose current minimum and add to list
         current_node = curMin
         closed_list.append(current_node)
 

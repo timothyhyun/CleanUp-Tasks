@@ -3,7 +3,7 @@ import utility
 class Agent:
     
 
-    # Storing history of 
+    # Storing history of player location
 
     partnerLocation = []
     decision = []
@@ -17,17 +17,19 @@ class Agent:
 
 
     def computeSink(self, x, y, maze):
-
+        # fill sink
         for i in range(5):
             for j in range(5):
                 maze[y//10+i][x//10+j] = 1
         return maze
 
-
+    # interpret a star 
     def addMoves(self, path):
         (currenty, currentx) = path[0]
+        # count frequency of actions
         for move in path[1:]:
             (y,x) = move
+            # determine which movement
             if currenty > y:
                 if self.decision[-1][0] == "U":
                     self.decision[-1][1] +=5
@@ -68,13 +70,13 @@ class Agent:
         maze[player["y"]//10+1][player["x"]//10+1] = 1 
         
 
-    
+
         for item in items:
             if item["status"]:
                 maze[item["y"]//10][item["x"]//10] = 1
         
         
-
+        # fill maze with sinks
         maze = self.computeSink(rsink["x"], rsink["y"], maze)
         maze = self.computeSink(bsink["x"], bsink["y"], maze)
         maze = self.computeSink(gsink["x"], gsink["y"], maze)
@@ -88,6 +90,7 @@ class Agent:
         pick = None
         min = 3000
         loc = -1
+        # find closest item
         for i,item in enumerate(items):
             itemX = item["x"] + 5
             itemY = item["y"] + 5
@@ -99,13 +102,14 @@ class Agent:
                 dx = itemX - agentX
                 dy = itemY - agentY
     
+        # Create start and end goals
         start = (ag["y"]//10, ag["x"]//10)
         end = (pick["y"]//10, pick["x"]//10)
     
 
         path = utility.astar(maze, start, end)
 
-
+        # interpret path 
         # initial start
         (iy,ix) = path[0]
         dx = ix*10 - ag["x"]
@@ -149,6 +153,7 @@ class Agent:
 
 
     def getTurn(self ):
+    # return decision and reset
         temp =  self.decision
         self.decision = []
         return temp

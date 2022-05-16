@@ -53,10 +53,10 @@ var gsinks = {
 
 var colorList = ["red", "blue", "green"];
 var colorDict = {"red": 1, "blue": 2, "green":3};
+
+
 var playerTurn = true;
 var hasRun = false;
-
-
 var startTime; 
 
 
@@ -68,6 +68,7 @@ for (var c = 0; c < itemCount; c++) {
 }
 var i = 0;
 while (i < 15){
+    // Makes sure items are spaced out correctly
     var tx = Math.round((Math.floor(Math.random() * 400) + canvas.width/2 - 200)/10)*10 ;
     var ty = Math.round((Math.floor(Math.random() * 300) + canvas.height/2 - 150) / 10) * 10 ;
     if (i%3 == 0){
@@ -91,6 +92,8 @@ while (i < 15){
 
 }
 
+
+// Change Key Variables based on whether a key is being pressed
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
 
@@ -122,7 +125,7 @@ function keyUpHandler(e) {
     } 
 }
 
-
+// Draw Items
 function drawItems(){
     for (var c = 0; c < itemCount; c++){
         temp = items[c];
@@ -138,6 +141,8 @@ function drawItems(){
 
 }
 
+
+// Draw 3 sinks
 function drawSinks(){
     ctx.beginPath();
     ctx.rect(rsinks.x, rsinks.y, rsinks.width, rsinks.width);
@@ -158,13 +163,14 @@ function drawSinks(){
     ctx.closePath();
 }
 
-
+// Draw Player
 function drawPlayers(){
     ctx.beginPath();
     ctx.rect(player.x, player.y, player.width, player.width);
     ctx.fillStyle = "#0B3349";
     ctx.fill();
     ctx.closePath();
+    // If carrying an item, draw the item on top of the player
     if (player.carry != 0){
         ctx.beginPath();
         ctx.rect(player.x + player.width/2 - 5, player.y + player.width/2 - 5, 10, 10);
@@ -172,7 +178,7 @@ function drawPlayers(){
         ctx.fill();
         ctx.closePath();
     }
-
+    // Follow the same for agent
     ctx.beginPath();
     ctx.rect(agent.x, agent.y, agent.width, agent.width);
     ctx.fillStyle = "#871613";
@@ -188,7 +194,7 @@ function drawPlayers(){
 
 }
 
-
+// Helper function t o find closest object to player
 function calculateClose (newX, newY) {
     for (var i = 0; i < itemCount; i++) {
         var temp = items[i];
@@ -235,6 +241,7 @@ function calculateClose (newX, newY) {
                 return j + 15;
         }
     }
+    // return -1 if not near any object
     return -1;
 }
 
@@ -257,11 +264,12 @@ function move() {
     if (keys.down) {
         dy += 2;
     }
-
+    // Find new positition for player
     newX = player.x + dx;
     newY = player.y + dy;
     var validSpot = true;
 
+    // determine whether spot is valid
     // collisions with items, sinks and agent
     var close = calculateClose(newX, newY);
     if (close != -1){
@@ -288,7 +296,7 @@ function move() {
 
 function interactions () {
     if (keys.interact && player.close > -1) {
-        // place block on sink
+        // pick up an item
 
 
         if (player.close < 15 && player.carry == 0){
@@ -297,6 +305,7 @@ function interactions () {
             temp.status = false;
 
         } else {
+        // Otherwise, place a both at a sink
             var index = player.close - 15 + 1;
             if (player.carry == index){
                 sendTotal();
@@ -308,7 +317,7 @@ function interactions () {
 
     }
 }
-
+// Helper Function (sleep)
 function sleep(milliseconds) {
     const date = Date.now();
     let currentDate = null;
@@ -318,7 +327,7 @@ function sleep(milliseconds) {
 }
 
 
-
+// Update in-game clock
 function updateTime(){
     current = Date.now();
     minutes = Math.round((current-startTime) / 60000)
@@ -327,7 +336,7 @@ function updateTime(){
 }
 
 
-
+// Determine whether all the game is finished and stop game 
 function endCondition(){
     for (var c = 0; c < itemCount; c++){
         temp = items[c];
@@ -344,13 +353,12 @@ function endCondition(){
 }
 
 
-
+// initialize iterators for AI 
 var command = -1;
 var innerCommand = 0;
 var commands = [];
-
-
 function draw() {
+    // draw all items
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawPlayers();
     drawSinks();
@@ -359,8 +367,8 @@ function draw() {
         return
     }
     updateTime();
-
     if (playerTurn) {
+        // if player turn, allow player to move and interact
         move();
         interactions();
         innerCommand = 0;
@@ -368,7 +376,7 @@ function draw() {
         command = -1;
         hasRun = false
     }  else {
-        
+        // agent turn, determine whether to call server or execute action
         if (commands.length == 0 && hasRun == false){
             receiveData();
         } else {
@@ -383,6 +391,7 @@ function draw() {
 
 
 function executeAction(action) {
+    // interpret agents action (more or interact)
     if (action == "L") {
         agent.x -= 2;
     } else if (action == "R") {
@@ -404,20 +413,23 @@ function executeAction(action) {
 }
 
 function executeCommand() {
-
+    // if finished with commands, return
     if (commands == [] || commands.length == 0){
         return;
     }
     if (command == commands.length){
+        // if finished finnish agents actions
         playerTurn = true;
         commands = []
         innerCommand = 0
         command = -1;
         return;
     } else {
+        // gather current command
         var current = commands[command];
         var size = current[1];
         var action = current[0];
+        // execute each action the specified number of times
         if (innerCommand == size) {
             innerCommand = 0;
             command++;
@@ -430,10 +442,9 @@ function executeCommand() {
 }
 
 
-// need: function to continually send data to server
-
+//function to continually send data to server to send to database
 function sendData() {
-    $.getJSON('/updateServer',
+    $.getJSON('/receiveLocations',
         {time: current-startTime, px: player.x, py: player.y, pc: player.carry, ax:agent.x, ay: agent.y, ac: agent.carry, 
             rsx:rsinks.x, rsy:rsinks.y, bsx: bsinks.x, bsy: bsinks.y, gsx: gsinks.x, gsy: gsinks.y,
             i0x: items[0].x, i0y: items[0].y, i0c: items[0].color, i0s: items[0].status,
@@ -459,7 +470,7 @@ function sendData() {
 
 
 
-
+// send data to computer after player turn
 function sendTotal() { 
     $.getJSON('/receiveTurn',
             {px: player.x, py: player.y, pc: player.carry, ax:agent.x, ay: agent.y, ac: agent.carry, 
@@ -484,15 +495,16 @@ function sendTotal() {
         });
 }
 
-// need: function to continually listen for data from server
-
+// function to continually listen for data from server
 function receiveData() {
     if (!playerTurn && command == -1) {
+        // make sure this function is only run once
         hasRun = true
         fetch('/sendTurn')
             .then(function (response) {
                 return response.json();
             }).then(function (text) {
+                // Recieving Data
                 console.log("Recieving")
                 commands = text["turn"]
                 command = 0;
@@ -505,6 +517,8 @@ function receiveData() {
     }
 }
 
+
+// Call draw function waiting 10 milliseconds after every execution
 $(document).ready(function() {
     setTimeout(function tick() {
         draw();
@@ -512,9 +526,8 @@ $(document).ready(function() {
       }, 10);
 });
 
-
-$(document).ready(function() {
- 
+// Send data to server every 250 milliseconds
+$(document).ready(function() { 
     startTime = Date.now();
     setInterval(sendData, 250);
 });

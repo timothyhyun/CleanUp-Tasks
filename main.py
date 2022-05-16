@@ -1,8 +1,7 @@
 from flask import Flask, render_template, url_for, redirect, request, jsonify, session
 from pyparsing import dblSlashComment
 from agent import Agent
-from flask_mysqldb import MySQL
-import MySQLdb.cursors
+import sqlite3 as sql
 import json
 import uuid
 
@@ -15,14 +14,6 @@ curAgent = None
 dataid = ""
 
 
-# Enter your database connection details below
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'gamedata'
-
-# Intialize MySQL
-mysql = MySQL(app)
 
 
 
@@ -46,7 +37,7 @@ def receiveData():
     gsink = {}
     gsink["x"] = int(request.args.get("gsx"))
     gsink["y"] = int(request.args.get("gsy"))
-    time = str(request.args.get(time))
+    time = str(request.args.get("time"))
 
     items = []
     for i in range(15):
@@ -70,13 +61,16 @@ def receiveData():
 
 
     # Add Data
-
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('INSERT INTO states VALUES (%s,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)', (dataid+time, dataid, player["x"], player["y"], player["carry"], ag["x"], ag["y"], ag["carry"], rsink["x"], rsink["y"], bsink["x"], bsink["y"], gsink["x"], gsink["y"]))
-    mysql.connection.commit()
+    c = sql.connect("database.db")
+    cursor = c.cursor()
+    # Query data to database
+    cursor.execute("INSERT INTO states VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (dataid+time, dataid, player["x"], player["y"], player["carry"], ag["x"], ag["y"], ag["carry"], rsink["x"], rsink["y"], bsink["x"], bsink["y"], gsink["x"], gsink["y"]))
+    itemnum = 0
     for item in items:
-        cursor.execute('INSERT INTO items VALUES (NULL, %d, %d, %r, %s, %s)', (item["x"], item["y"], item["status"], item["color"], dataid+time))
-    mysql.connection.commit()
+        cursor.execute("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?)", (dataid+time+str(itemnum), item["x"], item["y"], item["status"], item["color"], dataid+time))
+        itemnum += 1
+    # commit queries
+    c.commit()
     cursor.close()
 
 
@@ -143,10 +137,12 @@ def sendTurn():
 @app.route("/home")
 def home():
     if key not in session:
+        # Create session
         global id
         session[key] = id
         id += 1
         global dataid
+        # create unique id for each game
         dataid = str(uuid.uuid1())
     global curAgent
     curAgent = Agent()
