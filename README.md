@@ -14,18 +14,18 @@ Clone and Navigate to the Repository
 pip install -r requirements.txt
 ```
 
-To clear all Game Data, Delete the file ```bash database.db```
+To clear all Game Data, Delete the file ```database.db```
 
 
 
 ## Execution: 
-1. Initialize the Database: (You only need to run this once)
+1. Initialize the Database: (You only need to run this once). After running this file, the file ```database.db``` should be created. 
 ```bash 
 py init_db.py
 ```
  
 
-2. 
+2. Start the web server, 
 ```bash 
 py main.py
 ```
