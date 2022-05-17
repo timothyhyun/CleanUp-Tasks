@@ -104,7 +104,7 @@ class Agent:
     
         # Create start and end goals
         start = (ag["y"]//10, ag["x"]//10)
-        end = (pick["y"]//10, pick["x"]//10)
+        end = (pick["y"]//10+1, pick["x"]//10)
     
 
         path = utility.astar(maze, start, end)
@@ -136,15 +136,15 @@ class Agent:
         if (color == "red"):
             send = (rsink["y"]//10 + 5, rsink["x"]//10 + 1)
             if maze[rsink["y"]//10 + 5][rsink["x"]//10 + 1] == 1:
-                send = (rsink["y"]//10 + 5, rsink["x"]//10 + 5)
+                send = (rsink["y"]//10 - 2, rsink["x"]//10 + 1)
         elif (color == "green"):
             send = (gsink["y"]//10 + 5, gsink["x"]//10 + 1)
             if maze[gsink["y"]//10 + 5][gsink["x"]//10 + 1] == 1 :
-                send = (gsink["y"]//10 + 5, gsink["x"]//10 + 3)
+                send = (gsink["y"]//10 - 2, gsink["x"]//10 + 1)
         elif (color == "blue"):
             send = (bsink["y"]//10 + 5, bsink["x"]//10 + 1)
             if maze[bsink["y"]//10 + 5][bsink["x"]//10 + 1] == 1 :
-                send = (bsink["y"]//10 + 5, bsink["x"]//10 + 3)
+                send = (bsink["y"]//10 - 2, bsink["x"]//10 + 1)
 
 
         path = utility.astar(maze, end, send)
